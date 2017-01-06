@@ -3,6 +3,8 @@ package io.georocket.jope;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Hgd {
 
@@ -21,6 +23,10 @@ public class Hgd {
 	private final static BigDecimal dec2p = BigDecimal.valueOf(2 * Math.PI);
 	private final static BigDecimal log2p = decHalf
 			.multiply(BigDecimalUtils.ln(dec2p, bdPrecision));
+	
+	static Map<BigDecimal, BigDecimal> loggamCache = new HashMap<>();
+	static Map<BigDecimal, BigInteger> loggamCacheHitCount = new HashMap<>();
+	static long loggamHits = 0;
 
 	/**
 	 * Private utility method used to compute the square root of a BigDecimal.
@@ -191,7 +197,13 @@ public class Hgd {
 			BigDecimal.valueOf(1.796443723688307e-01), BigDecimal.valueOf(-1.39243221690590e+00) };
 
 	private static BigDecimal loggam(BigDecimal x) {
-
+		BigDecimal r = loggamCache.get(x);
+		if (r != null) {
+			loggamHits++;
+			loggamCacheHitCount.put(x, loggamCacheHitCount.get(x).add(BigInteger.ONE));
+			return r;
+		}
+		
 		BigDecimal x0 = x;
 		int n = 0;
 
@@ -220,6 +232,9 @@ public class Hgd {
 				x0 = x0.subtract(BigDecimal.ONE);
 				gl = gl.subtract(BigDecimalUtils.ln(x0, bdPrecision));
 			}
+		
+		loggamCache.put(x, gl);
+		loggamCacheHitCount.put(x, BigInteger.ONE);
 
 		return gl;
 	}
