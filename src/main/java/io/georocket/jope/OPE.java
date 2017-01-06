@@ -3,8 +3,9 @@ package io.georocket.jope;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class OPE {
 
@@ -15,9 +16,11 @@ public class OPE {
 	final ValueRange inRange;
 	final ValueRange outRange;
 	
-	final Map<BigInteger, BigInteger> cache = new HashMap<>();
-	final Map<BigInteger, BigInteger> cacheHitCount = new HashMap<>();
-	long cacheHits = 0;
+	final Map<BigInteger, BigInteger> cache = new ConcurrentHashMap<>();
+	final Map<BigInteger, BigInteger> cacheHitCount = new ConcurrentHashMap<>();
+	final AtomicLong cacheHits = new AtomicLong(0L);
+	
+	final Hgd hgd = new Hgd();
 
 	public OPE(String key) {
 		this(key, 32, 48);
@@ -36,7 +39,7 @@ public class OPE {
 		this.outRange = outRange;
 	}
 	
-	private void clearCache() {
+	public void clearCache() {
 		cache.clear();
 		cacheHitCount.clear();
 	}
@@ -68,16 +71,18 @@ public class OPE {
 		BigInteger mid = outEdge.add(m);
 
 		BigInteger cacheKey = outRange.start.add(m);
-		BigInteger x = cache.get(cacheKey);
-		if (x == null) {
-			Coins coins = new Coins(this.key, mid);
-			x = sampleHGD(inRange, outRange, mid, coins);
-			cacheHitCount.put(cacheKey, BigInteger.ONE);
-			cache.put(cacheKey, x);
-		} else {
-			cacheHitCount.put(cacheKey, cacheHitCount.get(cacheKey).add(BigInteger.ONE));
-			cacheHits++;
-		}
+		final ValueRange finalInRange = inRange;
+		final ValueRange finalOutRange = outRange;
+		BigInteger x = cache.compute(cacheKey, (k, v) -> {
+			if (v == null) {
+				Coins coins = new Coins(this.key, mid);
+				return sampleHGD(finalInRange, finalOutRange, mid, coins);
+			} else {
+				cacheHitCount.merge(k, BigInteger.ONE, (a, b) -> a.add(b));
+				cacheHits.incrementAndGet();
+				return v;
+			}
+		});
 
 		if (ptxt.compareTo(x) <= 0) {
 			inRange = new ValueRange(inEdge.add(BigInteger.ONE), x);
@@ -90,7 +95,7 @@ public class OPE {
 		return this.encryptRecursive(ptxt, inRange, outRange);
 	}
 
-	private BigInteger decrypt(BigInteger ctxt) {
+	public BigInteger decrypt(BigInteger ctxt) {
 
 		if (!this.outRange.contains(ctxt))
 			throw new RuntimeException("Ciphertext is not within the input range");
@@ -165,7 +170,7 @@ public class OPE {
 		return curRange.start;
 	}
 
-	private static BigInteger sampleHGD(ValueRange inRange, ValueRange outRange,
+	private BigInteger sampleHGD(ValueRange inRange, ValueRange outRange,
 			BigInteger nSample, Coins coins) {
 
 		BigInteger inSize = inRange.size();
@@ -176,7 +181,7 @@ public class OPE {
 		if (inSize.compareTo(outSize) == 0)
 			return inRange.start.add(nSampleIndex).subtract(BigInteger.ONE);
 
-		BigInteger inSampleNum = Hgd.rhyper(nSampleIndex, inSize, outSize, coins);
+		BigInteger inSampleNum = hgd.rhyper(nSampleIndex, inSize, outSize, coins);
 
 		if (inSampleNum.compareTo(BigInteger.ZERO) == 0)
 			return inRange.start;

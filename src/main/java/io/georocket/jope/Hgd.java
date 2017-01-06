@@ -3,8 +3,9 @@ package io.georocket.jope;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Hgd {
 
@@ -24,9 +25,9 @@ public class Hgd {
 	private final static BigDecimal log2p = decHalf
 			.multiply(BigDecimalUtils.ln(dec2p, bdPrecision));
 	
-	static Map<BigDecimal, BigDecimal> loggamCache = new HashMap<>();
-	static Map<BigDecimal, BigInteger> loggamCacheHitCount = new HashMap<>();
-	static long loggamHits = 0;
+	final Map<BigDecimal, BigDecimal> loggamCache = new ConcurrentHashMap<>();
+	final Map<BigDecimal, BigInteger> loggamCacheHitCount = new ConcurrentHashMap<>();
+	final AtomicLong loggamHits = new AtomicLong(0L);
 
 	/**
 	 * Private utility method used to compute the square root of a BigDecimal.
@@ -68,7 +69,7 @@ public class Hgd {
 		return out / TWO_32;
 	}
 
-	public static BigInteger rhyper(BigInteger kk, BigInteger nn1, BigInteger nn2, Coins coins) {
+	public BigInteger rhyper(BigInteger kk, BigInteger nn1, BigInteger nn2, Coins coins) {
 		if (kk.compareTo(BigInteger.TEN) > 0)
 			return hypergeometricHrua(coins, nn1, nn2, kk);
 		else
@@ -107,7 +108,7 @@ public class Hgd {
 	private final static BigDecimal D1 = new BigDecimal("1.7155277699214135");
 	private final static BigDecimal D2 = new BigDecimal("0.8989161620588988");
 
-	private static BigInteger hypergeometricHrua(Coins coins, BigInteger good, BigInteger bad,
+	private BigInteger hypergeometricHrua(Coins coins, BigInteger good, BigInteger bad,
 			BigInteger sampleBI) {
 
 		boolean moreGood;
@@ -195,15 +196,20 @@ public class Hgd {
 			BigDecimal.valueOf(8.417508417508418e-04), BigDecimal.valueOf(-1.917526917526918e-03),
 			BigDecimal.valueOf(6.410256410256410e-03), BigDecimal.valueOf(-2.955065359477124e-02),
 			BigDecimal.valueOf(1.796443723688307e-01), BigDecimal.valueOf(-1.39243221690590e+00) };
+	
+	private BigDecimal loggam(BigDecimal x) {
+		return loggamCache.compute(x, (k, v) -> {
+			if (v == null) {
+				return loggamInternal(k);
+			} else {
+				loggamCacheHitCount.merge(k, BigInteger.ONE, (a, b) -> a.add(b));
+				loggamHits.incrementAndGet();
+				return v;
+			}
+		});
+	}
 
-	private static BigDecimal loggam(BigDecimal x) {
-		BigDecimal r = loggamCache.get(x);
-		if (r != null) {
-			loggamHits++;
-			loggamCacheHitCount.put(x, loggamCacheHitCount.get(x).add(BigInteger.ONE));
-			return r;
-		}
-		
+	private BigDecimal loggamInternal(BigDecimal x) {
 		BigDecimal x0 = x;
 		int n = 0;
 
@@ -233,9 +239,6 @@ public class Hgd {
 				gl = gl.subtract(BigDecimalUtils.ln(x0, bdPrecision));
 			}
 		
-		loggamCache.put(x, gl);
-		loggamCacheHitCount.put(x, BigInteger.ONE);
-
 		return gl;
 	}
 
