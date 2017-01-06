@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 
 public class OPE {
 
-	final static int PRECISION = 10;
+	final static int PRECISION = 20;
 	final static RoundingMode RM = RoundingMode.HALF_UP;
 
 	final String key;

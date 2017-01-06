@@ -88,7 +88,7 @@ public class Hgd {
 			BigDecimal U = BigDecimal.valueOf(prngDraw(coins));
 
 			BigDecimal d1K = d1.add(K);
-			BigDecimal inner = U.add(Y.divide(d1K, OPE.PRECISION, OPE.RM)).setScale(0,
+			BigDecimal inner = U.add(Y.divide(d1K, bdPrecision, OPE.RM)).setScale(0,
 					RoundingMode.FLOOR);
 			Y = Y.subtract(inner);
 
@@ -129,19 +129,19 @@ public class Hgd {
 		BigDecimal popsize = new BigDecimal(good.add(bad));
 		BigDecimal sample = new BigDecimal(sampleBI);
 		BigDecimal m = sample.min(popsize.subtract(sample));
-		BigDecimal d4 = mingoodbad.divide(popsize, OPE.PRECISION, OPE.RM);
+		BigDecimal d4 = mingoodbad.divide(popsize, bdPrecision, OPE.RM);
 		BigDecimal d5 = BigDecimal.ONE.subtract(d4);
 		BigDecimal d6 = m.multiply(d4).add(decHalf);
 
 		BigDecimal d7a = popsize.subtract(m).multiply(sample).multiply(d4).multiply(d5)
-				.divide(popsize.subtract(BigDecimal.ONE), OPE.PRECISION, OPE.RM).add(decHalf);
+				.divide(popsize.subtract(BigDecimal.ONE), bdPrecision, OPE.RM).add(decHalf);
 		BigDecimal d7 = bigSqrt(d7a);
 
 		BigDecimal d8 = D1.multiply(d7).add(D2);
 
 		BigDecimal mingoodbadplus1 = mingoodbad.add(BigDecimal.ONE);
 		BigDecimal d9 = m.add(BigDecimal.ONE).multiply(mingoodbadplus1)
-				.divide(popsize.add(dec2), OPE.PRECISION, OPE.RM);
+				.divide(popsize.add(dec2), bdPrecision, OPE.RM);
 
 		BigDecimal d9plus1 = d9.add(BigDecimal.ONE);
 		BigDecimal d10 = loggam(d9plus1).add(loggam(mingoodbadplus1.subtract(d9)))
@@ -157,7 +157,7 @@ public class Hgd {
 			BigDecimal X = BigDecimal.valueOf(prngDraw(coins));
 			BigDecimal Y = BigDecimal.valueOf(prngDraw(coins));
 			BigDecimal W = d6
-					.add(d8.multiply(Y.subtract(decHalf)).divide(X, OPE.PRECISION, OPE.RM));
+					.add(d8.multiply(Y.subtract(decHalf)).divide(X, bdPrecision, OPE.RM));
 
 			if (W.compareTo(BigDecimal.ZERO) < 0 || W.compareTo(d11) >= 0)
 				continue;
@@ -214,7 +214,7 @@ public class Hgd {
 			x0 = x.add(new BigDecimal(n));
 		}
 
-		BigDecimal x2 = BigDecimal.ONE.divide(x0.multiply(x0), OPE.PRECISION, OPE.RM);
+		BigDecimal x2 = BigDecimal.ONE.divide(x0.multiply(x0), bdPrecision, OPE.RM);
 
 		BigDecimal gl0 = a[9];
 
@@ -223,7 +223,7 @@ public class Hgd {
 			gl0 = gl0.add(a[k]);
 		}
 
-		BigDecimal gl = gl0.divide(x0, OPE.PRECISION, OPE.RM).add(log2p)
+		BigDecimal gl = gl0.divide(x0, bdPrecision, OPE.RM).add(log2p)
 				.add(x0.subtract(decHalf).multiply(BigDecimalUtils.ln(x0, bdPrecision)))
 				.subtract(x0);
 
