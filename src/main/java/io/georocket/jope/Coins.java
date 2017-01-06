@@ -1,4 +1,4 @@
-package jope;
+package io.georocket.jope;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

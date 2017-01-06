@@ -1,4 +1,4 @@
-package jope;
+package io.georocket.jope;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
