@@ -3,6 +3,8 @@ package io.georocket.jope;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OPE {
 
@@ -12,6 +14,10 @@ public class OPE {
 	final String key;
 	final ValueRange inRange;
 	final ValueRange outRange;
+	
+	final Map<BigInteger, BigInteger> cache = new HashMap<>();
+	final Map<BigInteger, BigInteger> cacheHitCount = new HashMap<>();
+	long cacheHits = 0;
 
 	public OPE(String key) {
 		this(key, 32, 48);
@@ -28,6 +34,11 @@ public class OPE {
 		this.key = key;
 		this.inRange = inRange;
 		this.outRange = outRange;
+	}
+	
+	private void clearCache() {
+		cache.clear();
+		cacheHitCount.clear();
 	}
 
 	public BigInteger encrypt(BigInteger ptxt) {
@@ -56,9 +67,17 @@ public class OPE {
 				.toBigInteger();
 		BigInteger mid = outEdge.add(m);
 
-		Coins coins = new Coins(this.key, mid);
-
-		BigInteger x = sampleHGD(inRange, outRange, mid, coins);
+		BigInteger cacheKey = outRange.start.add(m);
+		BigInteger x = cache.get(cacheKey);
+		if (x == null) {
+			Coins coins = new Coins(this.key, mid);
+			x = sampleHGD(inRange, outRange, mid, coins);
+			cacheHitCount.put(cacheKey, BigInteger.ONE);
+			cache.put(cacheKey, x);
+		} else {
+			cacheHitCount.put(cacheKey, cacheHitCount.get(cacheKey).add(BigInteger.ONE));
+			cacheHits++;
+		}
 
 		if (ptxt.compareTo(x) <= 0) {
 			inRange = new ValueRange(inEdge.add(BigInteger.ONE), x);
