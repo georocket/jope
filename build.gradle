@@ -1,0 +1,6 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.3'
+}
