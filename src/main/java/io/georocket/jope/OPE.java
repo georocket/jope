@@ -43,8 +43,6 @@ public class OPE {
 		BigInteger inSize = inRange.size();
 		BigInteger outSize = outRange.size();
 
-		assert inSize.compareTo(outSize) <= 0;
-
 		if (inRange.size().compareTo(BigInteger.ONE) == 0) {
 			Coins coins = new Coins(this.key, ptxt);
 			return sampleUniform(outRange, coins);
@@ -85,8 +83,6 @@ public class OPE {
 
 		BigInteger inSize = inRange.size();
 		BigInteger outSize = outRange.size();
-
-		assert inSize.compareTo(outSize) <= 0;
 
 		if (inRange.size().compareTo(BigInteger.ONE) == 0) {
 			BigInteger inRangeMin = inRange.start;
@@ -132,8 +128,6 @@ public class OPE {
 
 		ValueRange curRange = new ValueRange(inRange);
 
-		assert curRange.size().compareTo(BigInteger.ZERO) != 0;
-
 		while (curRange.size().compareTo(BigInteger.ONE) > 0) {
 
 			// System.out.println(curRange.start + " " + curRange.end);
@@ -149,8 +143,6 @@ public class OPE {
 				throw new RuntimeException("Unexpected bit value");
 		}
 
-		assert curRange.size().compareTo(BigInteger.ZERO) != 0;
-
 		return curRange.start;
 	}
 
@@ -159,10 +151,6 @@ public class OPE {
 
 		BigInteger inSize = inRange.size();
 		BigInteger outSize = outRange.size();
-
-		assert inSize.compareTo(BigInteger.ZERO) > 0 && outSize.compareTo(BigInteger.ZERO) > 0;
-		assert inSize.compareTo(outSize) <= 0;
-		assert outRange.contains(nSample);
 
 		BigInteger nSampleIndex = nSample.subtract(outRange.start).add(BigInteger.ONE);
 
@@ -176,11 +164,7 @@ public class OPE {
 		else if (inSampleNum.compareTo(inSize) == 0)
 			return inRange.end;
 		else {
-			BigInteger inSample = inRange.start.add(inSampleNum);
-
-			assert inRange.contains(inSample);
-
-			return inSample;
+			return inRange.start.add(inSampleNum);
 		}
 	}
 
