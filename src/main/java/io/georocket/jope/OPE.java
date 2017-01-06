@@ -9,24 +9,28 @@ public class OPE {
 	final static int PRECISION = 10;
 	final static RoundingMode RM = RoundingMode.HALF_UP;
 
-	String key;
-	ValueRange inRange;
-	ValueRange outRange;
+	final String key;
+	final ValueRange inRange;
+	final ValueRange outRange;
 
-	public OPE() {
-
-		this.key = "key";
-
-		this.inRange = new ValueRange(new BigInteger("2").pow(32).negate(),
-				new BigInteger("2").pow(32));
-		this.outRange = new ValueRange(new BigInteger("2").pow(48).negate(),
-				new BigInteger("2").pow(48));
-
-		// this.inRange = new ValueRange(BigInteger.ZERO, new BigInteger("100"));
-		// this.outRange = new ValueRange(BigInteger.ZERO, new BigInteger("200"));
+	public OPE(String key) {
+		this(key, 32, 48);
+	}
+	
+	public OPE(String key, int inBits, int outBits) {
+		this(key, new ValueRange(new BigInteger("2").pow(inBits).negate(),
+						new BigInteger("2").pow(inBits)),
+				new ValueRange(new BigInteger("2").pow(outBits).negate(),
+						new BigInteger("2").pow(outBits)));
+	}
+	
+	public OPE(String key, ValueRange inRange, ValueRange outRange) {
+		this.key = key;
+		this.inRange = inRange;
+		this.outRange = outRange;
 	}
 
-	private BigInteger encrypt(BigInteger ptxt) {
+	public BigInteger encrypt(BigInteger ptxt) {
 
 		if (!this.inRange.contains(ptxt))
 			throw new RuntimeException("Plaintext is not within the input range");
@@ -181,9 +185,10 @@ public class OPE {
 	}
 
 	public static void main(String[] args) {
-		OPE o = new OPE();
+		OPE o = new OPE("key");
 
-		for (int i = -99999; i <= 99999; i++) {
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < 1000; i++) {
 
 			BigInteger p = new BigInteger("" + i);
 
@@ -193,11 +198,11 @@ public class OPE {
 			if (d.compareTo(p) != 0)
 				throw new RuntimeException("failed: " + p + " " + d);
 
-			if (i % 10 == 0)
+			if (i % 1000 == 0)
 				System.out.println(e + " " + d);
 		}
-
-		System.out.println("done");
-
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Done in " + (end - start) + " ms");
 	}
 }
